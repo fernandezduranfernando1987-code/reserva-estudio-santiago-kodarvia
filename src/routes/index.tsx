@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  CLAVE, DIAS, EJEMPLO, TIPOS, cargar, fin, guardar, haySolape, iso, semana,
+  DIAS, EJEMPLO, TIPOS, cargar, fin, guardar, haySolape, iso, semana,
   type Reserva, type Tipo,
 } from "@/lib/reservas";
-
+const CLAVE  = "admin123" ;
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
