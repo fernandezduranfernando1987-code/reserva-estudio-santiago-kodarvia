@@ -16,7 +16,7 @@ En la página principal abajo hay un botón "Reiniciar datos de ejemplo" que res
 
 ## Cómo modificar la clave de admin
 
-La clave está en src/routes/admin.tsx en la constante ADMIN_PASSWORD. Cambiar el valor por defecto 'admin123' por la que quieras.
+La clave está en src/pages/admin.tsx en la constante ADMIN_PASSWORD. Cambiar el valor por defecto 'admin123' por la que quieras.
 
 ## Rutas
 
@@ -27,3 +27,8 @@ La clave está en src/routes/admin.tsx en la constante ADMIN_PASSWORD. Cambiar e
 ## Stack
 
 Bun, TanStack Router, Tailwind, localStorage.
+
+## Datos y servicios simulados
+- Almacenamiento en localStorage (no base de datos real)
+- Emails y pagos simulados con alertas
+- Los datos se reinician con el botón "Reiniciar datos de ejemplo"
