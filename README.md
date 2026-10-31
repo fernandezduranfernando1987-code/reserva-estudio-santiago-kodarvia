@@ -1,15 +1,22 @@
-# Reserva Estudio Santiago - Kodarvia
 
-Sistema de reservas para estudio de grabación.
+## Funcionalidades
+- Reserva de salas por fecha y hora
+- Validación de disponibilidad en tiempo real
+- Panel de administración en /admin
+- Gestión de bloqueos horarios
 
-## Tecnologías
-- React + Vite
-- TanStack Router (file-based routing en src/routes/)
-- Tailwind CSS
-- TypeScript
-- localStorage para persistencia
+## Datos Importantes
 
-## Cómo correr
-```bash
-bun install
-bun run dev
+**Almacenamiento:**
+- Reservas: `kodarvia_reservas`
+- Bloqueos: `kodarvia_bloqueos`
+
+**Admin:**
+- Ruta: `/admin`
+- Archivo: `src/routes/admin.tsx`
+- Clave: `admin123`
+- Componente Route: `export const Route = createFileRoute('/admin')`
+
+## Estructura
+- `src/routes/admin.tsx` - Panel admin
+- `src/components/BloqueosAdmin.tsx` - Bloqueos
