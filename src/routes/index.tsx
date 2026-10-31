@@ -1,10 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Button } from '@/components/ui/button';
+import { InformacionEstudio } from '@/components/informacion-estudio';
+import { cargarBloqueos, horarioBloqueado, limpiarTelefono, type HoraBloqueada } from '@/lib/horas-bloqueadas';
 import {
   DIAS, EJEMPLO, TIPOS, cargar, fin, guardar, haySolape, iso, semana,
   type Reserva, type Tipo,
 } from "@/lib/reservas";
-const CLAVE  = "admin123" ;
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -12,6 +15,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Agenda grabación, mezcla o masterización en nuestro estudio en Chile. Lunes a sábado, 14:00 a 22:00." },
       { property: "og:title", content: "Reserva tu hora · Estudio de Grabación" },
       { property: "og:description", content: "Agenda grabación, mezcla o masterización. Lunes a sábado, 14:00 a 22:00." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Index,
@@ -46,8 +51,8 @@ function Index() {
   const [moviendo, setMoviendo] = useState<Reserva | null>(null);
   const [wsp, setWsp] = useState<Reserva | null>(null);
   const [aviso, setAviso] = useState("");
-  const [admin, setAdmin] = useState<"cerrado" | "clave" | "abierto">("cerrado");
-  const [clave, setClave] = useState("");
+  const [bloqueos, setBloqueos] = useState<HoraBloqueada[]>([]);
+  const [errorBloqueos, setErrorBloqueos] = useState(false);
 
   useEffect(() => {
     setReservas(cargar());
@@ -56,11 +61,19 @@ function Index() {
   }, []);
   useEffect(() => { if (listo) guardar(reservas); }, [reservas, listo]);
   useEffect(() => { if (listo) localStorage.setItem("kodarvia_mias", JSON.stringify(mias)); }, [mias, listo]);
+  useEffect(() => {
+    const refresh = () => { try { setBloqueos(cargarBloqueos()); setErrorBloqueos(false); } catch { setErrorBloqueos(true); } };
+    refresh();
+    window.addEventListener('storage', refresh); window.addEventListener('focus', refresh); window.addEventListener('horarios-cambiados', refresh);
+    return () => { window.removeEventListener('storage', refresh); window.removeEventListener('focus', refresh); window.removeEventListener('horarios-cambiados', refresh); };
+  }, []);
 
   const dias = semana(base);
   const tipoActivo = moviendo ? moviendo.tipo : tipo;
 
   const clickBloque = (h: number) => {
+    try { if (horarioBloqueado(cargarBloqueos(), fecha, h, TIPOS[tipoActivo].duracion)) { setAviso('Ese horario está bloqueado. Elige otro.'); return; } }
+    catch { setAviso('No se pudo verificar la disponibilidad. Inténtalo nuevamente.'); return; }
     if (haySolape(reservas, fecha, tipoActivo, h, moviendo?.id)) return;
     if (moviendo) {
       setReservas((rs) => rs.map((r) => (r.id === moviendo.id ? { ...r, fecha, inicio: h } : r)));
@@ -78,7 +91,9 @@ function Index() {
       alert("Ojo: nombre, email y teléfono son obligatorios.");
       return;
     }
-    if (nuevo === null || haySolape(reservas, fecha, tipo, nuevo)) {
+    let bloqueado = true;
+    try { bloqueado = nuevo === null || horarioBloqueado(cargarBloqueos(), fecha, nuevo, TIPOS[tipo].duracion); } catch {}
+    if (nuevo === null || bloqueado || haySolape(reservas, fecha, tipo, nuevo)) {
       alert("Ese bloque ya se tomó, elige otro.");
       return;
     }
@@ -97,7 +112,6 @@ function Index() {
   };
 
   const misReservas = [...reservas].sort((a, b) => (a.fecha + String(a.inicio).padStart(2, "0")).localeCompare(b.fecha + String(b.inicio).padStart(2, "0")));
-  const ordenadas = [...reservas].sort((a, b) => (a.fecha + String(a.inicio).padStart(2, "0")).localeCompare(b.fecha + String(b.inicio).padStart(2, "0")));
 
   const Fila = ({ r, acciones }: { r: Reserva; acciones?: boolean }) => (
     <li className="rounded-xl bg-card p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -149,8 +163,8 @@ function Index() {
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-3xl">2. Día</h2>
           <div className="flex gap-2">
-            <button aria-label="Semana anterior" className={btnS} onClick={() => setBase(new Date(dias[0]!.getTime() - 7 * 864e5))}>‹</button>
-            <button aria-label="Semana siguiente" className={btnS} onClick={() => setBase(new Date(dias[0]!.getTime() + 7 * 864e5))}>›</button>
+            <button aria-label="Semana anterior" className={btnS} onClick={() => { const lunes = dias[0]; if (lunes) setBase(new Date(lunes.getTime() - 7 * 864e5)); }}>‹</button>
+            <button aria-label="Semana siguiente" className={btnS} onClick={() => { const lunes = dias[0]; if (lunes) setBase(new Date(lunes.getTime() + 7 * 864e5)); }}>›</button>
           </div>
         </div>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -171,14 +185,16 @@ function Index() {
       <section className="space-y-3">
         <h2 className="text-3xl">3. Bloque</h2>
         <p className="text-sm text-muted-foreground capitalize">{fechaLarga(fecha)}</p>
+        {errorBloqueos && <p role="alert" className="text-sm">No se pudo verificar la disponibilidad de horarios.</p>}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {TIPOS[tipoActivo].bloques.map((h) => {
             const ocupado = haySolape(reservas, fecha, tipoActivo, h, moviendo?.id);
+            const bloqueado = horarioBloqueado(bloqueos, fecha, h, TIPOS[tipoActivo].duracion);
             return (
-              <button key={h} disabled={ocupado} onClick={() => clickBloque(h)}
-                className={`${btn} py-3 ${ocupado ? "bg-ocupado text-muted-foreground line-through cursor-not-allowed" : "bg-libre text-libre-foreground hover:ring-2 hover:ring-primary"}`}>
+              <button key={h} disabled={!listo || errorBloqueos || ocupado || bloqueado} onClick={() => clickBloque(h)}
+                className={`${btn} py-3 ${ocupado || bloqueado ? "bg-ocupado text-muted-foreground line-through cursor-not-allowed" : "bg-libre text-libre-foreground hover:ring-2 hover:ring-primary"}`}>
                 {h}:00 – {h + TIPOS[tipoActivo].duracion}:00
-                <span className="block text-xs no-underline">{ocupado ? "Ocupado" : "Libre"}</span>
+                <span className="block text-xs no-underline">{bloqueado ? "Bloqueado" : ocupado ? "Ocupado" : "Libre"}</span>
               </button>
             );
           })}
@@ -194,23 +210,22 @@ function Index() {
         )}
       </section>
 
+      <InformacionEstudio />
+
       <section className="space-y-3 border-t border-border pt-6">
         <div className="flex flex-col sm:flex-row gap-2">
-          <button className={btnS} onClick={() => setAdmin(admin === "abierto" ? "cerrado" : "clave")}>
-            {admin === "abierto" ? "Cerrar panel admin" : "Panel admin"}
-          </button>
+          <Button asChild variant="outline" className="min-h-12"><Link to="/admin">Panel admin</Link></Button>
           <button className={btnS} onClick={() => {
             if (!confirm("Esto borra todo y vuelve a los datos de ejemplo. ¿Seguimos?")) return;
             setReservas(EJEMPLO); guardar(EJEMPLO); setMias([]); setMoviendo(null); setAviso("Datos de ejemplo restaurados.");
           }}>Reiniciar datos de ejemplo</button>
         </div>
-        {admin === "abierto" && (
-          <div className="space-y-2">
-            <h2 className="text-3xl">Todas las reservas ({reservas.length})</h2>
-            <ul className="space-y-2">{ordenadas.map((r) => <Fila key={r.id} r={r} />)}</ul>
-          </div>
-        )}
       </section>
+
+      <footer className="border-t border-border pt-6 pb-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
+        <p>Estudio independiente · Santiago de Chile</p>
+        <a href="/admin" className="font-semibold text-foreground underline underline-offset-4 hover:text-primary">Admin</a>
+      </footer>
 
       {nuevo !== null && (
         <Modal onClose={() => setNuevo(null)}>
@@ -219,7 +234,7 @@ function Index() {
           <form onSubmit={enviar} noValidate className="space-y-3">
             <input className={input} placeholder="Tu nombre o banda *" value={form.cliente} onChange={(e) => setForm({ ...form, cliente: e.target.value })} />
             <input className={input} type="email" placeholder="Email *" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            <input className={input} type="tel" placeholder="Teléfono * (+56 9 ...)" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
+            <input className={input} type="tel" maxLength={15} placeholder="Teléfono * (+56 9 ...)" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: limpiarTelefono(e.target.value) })} />
             <input className={input} placeholder="Proyecto (opcional)" value={form.proyecto} onChange={(e) => setForm({ ...form, proyecto: e.target.value })} />
             <div className="flex gap-2 pt-2">
               <button type="button" className={btnS + " flex-1"} onClick={() => setNuevo(null)}>Volver</button>
@@ -239,18 +254,6 @@ function Index() {
         </Modal>
       )}
 
-      {admin === "clave" && (
-        <Modal onClose={() => setAdmin("cerrado")}>
-          <h2 className="text-3xl mb-3">Acceso admin</h2>
-          <form className="space-y-3" onSubmit={(e) => {
-            e.preventDefault();
-            if (clave === CLAVE) { setAdmin("abierto"); setClave(""); } else alert("Clave incorrecta.");
-          }}>
-            <input className={input} type="password" placeholder="Clave" value={clave} onChange={(e) => setClave(e.target.value)} autoFocus />
-            <button className={btnP + " w-full"}>Entrar</button>
-          </form>
-        </Modal>
-      )}
     </main>
   );
 }

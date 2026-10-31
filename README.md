@@ -1,19 +1,29 @@
-# Reserva Estudio Santiago - Kodarvia
-Sistema para estudio de grabacion independiente en Santiago, Chile.
+# Sistema de Reservas Estudio de Grabación
 
-Preview: https://screenshot-to-site-536.lovable.app
-Stack: Vite + React + TanStack Router + Tailwind + bun
+Proyecto con TanStack Router + React + Bun.
 
-Para correr:
-bun install
-bun run dev
+## Cómo correr en local
 
-Archivos reales:
-- src/routes/index.tsx (CLAVE = "admin123")
-- src/routes/admin.tsx (ruta /admin con bloqueo manual)
-- src/lib/reservas.ts (haySolape, cargar, guardar)
+1. bun install
 
-Cumple feedback:
-- Footer con direccion Av Providencia 1208, mapa Google, horarios 14-22 y redes
-- Admin en /admin con mensaje "No hay reservas agendadas aun"
-- Telefono solo numeros
+2. bun run dev
+
+Abrir http://localhost:5173
+
+## Cómo reiniciar datos de ejemplo
+
+En la página principal abajo hay un botón "Reiniciar datos de ejemplo" que restaura las reservas de localStorage. También se puede borrar localStorage desde DevTools > Application > Local Storage.
+
+## Cómo modificar la clave de admin
+
+La clave está en src/routes/admin.tsx en la constante ADMIN_PASSWORD. Cambiar el valor por defecto 'admin123' por la que quieras.
+
+## Rutas
+
+/ -> página principal de reservas
+
+/admin -> panel de administración (requiere clave)
+
+## Stack
+
+Bun, TanStack Router, Tailwind, localStorage.

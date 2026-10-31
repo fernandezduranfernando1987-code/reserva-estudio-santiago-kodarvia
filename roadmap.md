@@ -1,0 +1,7 @@
+- [x] Create the professional admin summary, filters, table and persistent actions.
+- [x] Read populated local booking sources, including the main website's source; no Cloud connection exists.
+- [x] Verify actions, saved changes and mobile layout; 11 tests and browser flows pass.
+- [x] Add studio information, example map and social links below bookings.
+- [x] Remove index admin modal; add manual blocking and updated empty state on /admin.
+- [x] Prevent blocked slots for new and moved reservations; sanitize phone to numbers/+ and 15 characters.
+- [x] Verify block/save/unblock and booking flow; 17 tests pass and automatic build reports build OK.

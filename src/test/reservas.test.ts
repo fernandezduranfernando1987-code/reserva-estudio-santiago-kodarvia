@@ -1,7 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { haySolape, EJEMPLO, semana } from "@/lib/reservas";
+import { haySolape, EJEMPLO, semana, cargar } from "@/lib/reservas";
+import { vi } from "vitest";
 
 describe("haySolape", () => {
+  it("mantiene vacía la lista después de borrar la última reserva", () => {
+    const setItem = vi.fn();
+    vi.stubGlobal("localStorage", { getItem: () => "[]", setItem });
+    try {
+      expect(cargar()).toEqual([]);
+      expect(setItem).not.toHaveBeenCalled();
+    } finally { vi.unstubAllGlobals(); }
+  });
   const r = [EJEMPLO[0]!]; // grabación 10-nov 14-17
   it("mezcla 16-18 choca con grabación 14-17", () => {
     expect(haySolape(r, "2026-11-10", "mezcla", 16)).toBe(true);

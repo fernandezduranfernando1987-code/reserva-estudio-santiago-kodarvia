@@ -49,6 +49,12 @@
   --color-libre-foreground: var(--libre-foreground);
   --color-ocupado: var(--ocupado);
   --color-whatsapp: var(--whatsapp);
+  --color-admin-surface: var(--admin-surface);
+  --color-admin-ink: var(--admin-ink);
+  --color-admin-muted: var(--admin-muted);
+  --color-admin-border: var(--admin-border);
+  --color-admin-hover: var(--admin-hover);
+  --color-admin-success: var(--admin-success);
   --font-display: "Bebas Neue", sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
   --color-ring-offset-background: var(--background);
@@ -92,6 +98,12 @@
   --libre-foreground: oklch(0.183 0 0);
   --ocupado: oklch(0.29 0 0);
   --whatsapp: oklch(0.62 0.15 150);
+  --admin-surface: oklch(0.985 0 0);
+  --admin-ink: oklch(0.22 0 0);
+  --admin-muted: oklch(0.48 0 0);
+  --admin-border: oklch(0.88 0 0);
+  --admin-hover: oklch(0.955 0 0);
+  --admin-success: oklch(0.43 0.10 150);
 }
 
 @layer base {
